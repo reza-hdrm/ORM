@@ -13,6 +13,8 @@ import java.sql.SQLException;
 
 public class TableCreator {
     public void create(Object object) {
+        String query = getStringQuery(object);
+        System.out.println(query);
 
         DBConnection dbConnection = DBConnection.getDBConnection();
         Connection connection = null;
@@ -21,6 +23,15 @@ public class TableCreator {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        try {
+            PreparedStatement statement = connection.prepareStatement(query);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getStringQuery(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
         StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table.name() + " (");
         Field[] fields = object.getClass().getDeclaredFields();
@@ -35,12 +46,6 @@ public class TableCreator {
         if (query.toString().trim().endsWith(","))
             query = new StringBuilder(query.substring(0, query.length() - 1));
         query.append(");");
-        System.out.println(query);
-        try {
-            PreparedStatement statement = connection.prepareStatement(query.toString());
-            statement.execute();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        return query.toString();
     }
 }

@@ -24,7 +24,8 @@ public class DBConnection {
     }
 
     private void setDBProperties() throws IOException {
-        File file = new File("src/main/resources/application.properties");
+        String pathname="src/main/resources/application.properties";
+        File file = new File(pathname);
         Properties properties = new Properties();
         properties.load(new FileInputStream(file));
 
@@ -48,7 +49,7 @@ public class DBConnection {
         if (databaseConnection == null)
             synchronized (DBConnection.class) {
                 if (databaseConnection == null)
-                    return databaseConnection = new DBConnection();
+                    databaseConnection = new DBConnection();
             }
         return databaseConnection;
     }
