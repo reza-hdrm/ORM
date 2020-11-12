@@ -8,44 +8,47 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-public class DatabaseConnection {
+public class DBConnection {
+
     private String dbDriver;
     private String dbUser;
-    private String dbpPassword;
+    private String dbPassword;
     private String dbUrl;
-    private Connection connection = null;
-    private static volatile DatabaseConnection databaseConnection = null;
 
-    private DatabaseConnection() throws IOException {
-        setDBProperties();
-        getConnection();
+    private Connection connection = null;
+
+    private static volatile DBConnection databaseConnection = null;
+
+    private DBConnection() {
+
     }
 
     private void setDBProperties() throws IOException {
-        File file = new File("application.properties");
+        File file = new File("src/main/resources/application.properties");
         Properties properties = new Properties();
         properties.load(new FileInputStream(file));
 
         this.dbDriver = properties.getProperty("com.settings.db_driver");
         this.dbUrl = properties.getProperty("com.settings.db_url");
         this.dbUser = properties.getProperty("com.settings.db_user");
-        this.dbpPassword = properties.getProperty("com.settings.db_password");
+        this.dbPassword = properties.getProperty("com.settings.db_password");
     }
 
-    private Connection getConnection() {
+    public Connection getConnection() throws IOException {
+        setDBProperties();
         try {
-            connection = DriverManager.getConnection(this.dbUrl, this.dbUser, this.dbpPassword);
+            connection = DriverManager.getConnection(this.dbUrl, this.dbUser, this.dbPassword);
         } catch (SQLException e) {
             e.printStackTrace();
         }
         return connection;
     }
 
-    public static DatabaseConnection getDatabaseConnection() throws IOException {
+    public static DBConnection getDBConnection() {
         if (databaseConnection == null)
-            synchronized (DatabaseConnection.class) {
+            synchronized (DBConnection.class) {
                 if (databaseConnection == null)
-                    return databaseConnection = new DatabaseConnection();
+                    return databaseConnection = new DBConnection();
             }
         return databaseConnection;
     }
