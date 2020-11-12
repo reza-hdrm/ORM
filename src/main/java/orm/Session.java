@@ -11,6 +11,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Session {
     DBConnection dbConnection = null;
@@ -146,5 +148,75 @@ public class Session {
         }
         System.out.println(query);
         return object;
+    }
+
+    public void delete(Object object) {
+        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        String query = "DELETE FROM " + table.name() + " WHERE ";
+        Field[] fields = object.getClass().getDeclaredFields();
+        Object oid = null;
+        String idColumn = "";
+        for (Field field : fields) {
+            field.setAccessible(true);
+            Id id = field.getAnnotation(Id.class);
+            if (id != null) {
+                Column column = field.getAnnotation(Column.class);
+                try {
+                    oid = field.get(object);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                idColumn = column.name();
+            }
+        }
+        query += idColumn + " = " + oid;
+        System.out.println(query);
+        dbConnection = DBConnection.getDBConnection();
+        try {
+            dbConnection.getConnection().prepareStatement(query).executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Object> findAll(Object object) {
+        List<Object> objectList = new ArrayList<>();
+        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        Field[] fields = object.getClass().getDeclaredFields();
+        String tableName = table.name();
+        String query = "SELECT * FROM " + tableName;
+
+        ResultSet resultSet = null;
+        try {
+            resultSet = dbConnection.getDBConnection().getConnection().prepareStatement(query).executeQuery();
+            while (resultSet.next()){
+                object=object.getClass().newInstance();
+                for (Field field : fields) {
+                    field.setAccessible(true);
+                    Column column = field.getDeclaredAnnotation(Column.class);
+                    if (column != null) {
+                        if (field.getType().getSimpleName().endsWith("int"))
+                            field.set(object, resultSet.getInt(column.name()));
+                        else if (field.getType().getSimpleName().endsWith("String"))
+                            field.set(object, resultSet.getString(column.name()));
+                        else if (field.getType().getSimpleName().endsWith("Integer"))
+                            field.set(object, resultSet.getInt(column.name()));
+                    }
+                }
+                objectList.add(object);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        }
+        System.out.println(query);
+        return objectList;
     }
 }
