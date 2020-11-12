@@ -1,9 +1,11 @@
 package orm;
 
 import annotation.Column;
+import annotation.Entity;
 import annotation.Id;
 import annotation.Table;
 import database.DBConnection;
+import exception.EntityException;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -19,6 +21,13 @@ public class Session {
     Connection connection;
 
     public void save(Object object) {
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         String query = getStringQuery(object);
         System.out.println(query);
         dbConnection = DBConnection.getDBConnection();
@@ -34,6 +43,13 @@ public class Session {
     }
 
     private String getStringQuery(Object object) {
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         StringBuilder query = new StringBuilder("INSERT INTO ");
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
         query.append(table.name()).append("(");
@@ -66,6 +82,13 @@ public class Session {
 
     public void update(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         String query = "UPDATE " + table.name() + " SET ";
         Field[] fields = object.getClass().getDeclaredFields();
         Object oid = null;
@@ -109,8 +132,23 @@ public class Session {
         }
     }
 
-    public Object get(Object object, Object id) {
+    public Object get(Class clazz, Object id) {
+        Object object= null;
+        try {
+            object = clazz.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         Field[] fields = object.getClass().getDeclaredFields();
         String tableName = table.name();
         String idColumnName = "";
@@ -152,6 +190,13 @@ public class Session {
 
     public void delete(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         String query = "DELETE FROM " + table.name() + " WHERE ";
         Field[] fields = object.getClass().getDeclaredFields();
         Object oid = null;
@@ -182,6 +227,13 @@ public class Session {
     }
 
     public List<Object> findAll(Object object) {
+        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity==null)
+            try {
+                throw new EntityException(object);
+            } catch (EntityException e) {
+                System.out.println(e.getMessage());
+            }
         List<Object> objectList = new ArrayList<>();
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
         Field[] fields = object.getClass().getDeclaredFields();

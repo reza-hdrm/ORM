@@ -1,6 +1,7 @@
 package orm;
 
 import annotation.Column;
+import annotation.Id;
 import annotation.Table;
 import database.DBConnection;
 
@@ -14,7 +15,6 @@ import java.sql.SQLException;
 public class TableCreator {
     public void create(Object object) {
         String query = getStringQuery(object);
-        System.out.println(query);
 
         DBConnection dbConnection = DBConnection.getDBConnection();
         Connection connection = null;
@@ -40,12 +40,20 @@ public class TableCreator {
             for (Annotation annotation : annotations)
                 if (annotation instanceof Column) {
                     Column column = field.getAnnotation(Column.class);
-                    query.append(column.name()).append(" ").append(column.dataType()).append("(").append(column.size()).append("),");
+                    query.append(column.name()).append(" ").append(column.dataType()).append("(").append(column.size()).append(")");
+                    Id id = field.getDeclaredAnnotation(Id.class);
+                    if (id != null)
+                        if (id.autoIncrement())
+                            query.append(" NOT NULL PRIMARY KEY AUTO_INCREMENT");
+                        else
+                            query.append(" NOT NULL PRIMARY ");
+                    query.append(",");
                 }
         }
         if (query.toString().trim().endsWith(","))
             query = new StringBuilder(query.substring(0, query.length() - 1));
         query.append(");");
+        System.out.println(query);
         return query.toString();
     }
 }
