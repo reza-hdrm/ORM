@@ -1,10 +1,12 @@
 package entity;
 
 import annotation.Column;
+import annotation.Entity;
 import annotation.Id;
 import annotation.Table;
 import emum.DataType;
 
+@Entity
 @Table(name = "product_tbl")
 public class Product {
     @Id
