@@ -4,8 +4,6 @@ import entity.User;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-
 public class SessionTest {
     Session session;
 
@@ -19,37 +17,45 @@ public class SessionTest {
         user.setEmail("rezacolonelup@gmail.com");
         user.setMobile(933991484);
         session.save(user);
-        User userDB = (User) session.get(User.class, 1);
-        session.commite();
+        User userDB = (User) session.get(User.class, 8);
+        session.commit();
         session.close();
         Assert.assertEquals(" ", userDB.getFirstName(), "Reza");
     }
 
     @Test
     public void update() {
+        session=new Session();
+        session.beginTransaction();
+        User userDB=(User) session.get(User.class,7);
+
     }
 
     @Test
     public void get() {
         session = new Session();
         session.beginTransaction();
-        User userDB = (User) session.get(User.class, 3);
+        User userDB = (User) session.get(User.class, 7);
         Assert.assertEquals(" ", userDB.getFirstName(), "Reza");
-        session.commite();
+        session.commit();
         session.close();
     }
 
     @Test
     public void delete() {
-        //todo complete
+        //todo be test better
         session = new Session();
         session.beginTransaction();
-        User userDB = (User) session.get(User.class, 3);
-        Assert.assertEquals(" ", userDB.getFirstName(), "Reza");
+        int id = 6;
+        User userDB = (User) session.get(User.class, id);
+        Assert.assertEquals("this user isn't found :", userDB.getFirstName(), "Reza");
+        session.commit();
         session.delete(userDB);
-        session.commite();
+        session.commit();
+        userDB = (User) session.get(User.class, id);
+        Assert.assertNotEquals("this user is deleted :", userDB.getFirstName(), "Reza");
+        session.commit();
         session.close();
-        Assert.assertNull(" ", userDB.getFirstName());
     }
 
     @Test

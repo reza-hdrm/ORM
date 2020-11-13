@@ -12,13 +12,7 @@ import java.lang.reflect.Field;
 public class QueryBuilder {
     //TODO Show query in application.property
     public static String getInsertQuery(Object object) {
-
-        if (!Annotation.entityAnnotationDeclared(object))
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                e.printStackTrace();
-            }
+        Annotation.entityAnnotationDeclared(object);
 
         StringBuilder query = new StringBuilder("INSERT INTO ");
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
@@ -30,8 +24,8 @@ public class QueryBuilder {
             if (column != null)
                 query.append(column.name()).append(",");
         }
-        if (query.toString().trim().endsWith(","))
-            query = new StringBuilder(query.substring(0, query.length() - 1));
+        query = clearCommon(query);
+
         query.append(") VALUES (");
         for (Field field : fields) {
             try {
@@ -43,23 +37,25 @@ public class QueryBuilder {
                 e.printStackTrace();
             }
         }
-        if (query.toString().trim().endsWith(",")) {
-            query = new StringBuilder(query.substring(0, query.length() - 1));
-        }
+
+        query = clearCommon(query);
         query.append(")");
+
         System.out.println(query);
+
         return query.toString();
     }
 
+    private static StringBuilder clearCommon(StringBuilder query) {
+        if (query.toString().trim().endsWith(","))
+            query = new StringBuilder(query.substring(0, query.length() - 1));
+        return query;
+    }
+
     public static String getUpdateQuery(Object object) {
-        if (!Annotation.entityAnnotationDeclared(object))
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                e.printStackTrace();
-            }
+        Annotation.entityAnnotationDeclared(object);
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        String query = "UPDATE " + table.name() + " SET ";
+        StringBuilder query = new StringBuilder("UPDATE " + table.name() + " SET ");
         Field[] fields = object.getClass().getDeclaredFields();
         Object oid = null;
         String idColumn = "";
@@ -79,30 +75,23 @@ public class QueryBuilder {
                 try {
                     if (id == null)
                         if (field.getType().getSimpleName().endsWith("String"))
-                            query += column.name() + "='" + field.get(object) + "',";
+                            query.append(column.name()).append("='").append(field.get(object)).append("',");
                         else
-                            query += column.name() + "=" + field.get(object) + ",";
+                            query.append(column.name()).append("=").append(field.get(object)).append(",");
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
             }
         }
-        if (query.trim().endsWith(",")) {
-            query = query.substring(0, query.length() - 1);
-        }
-        query += " WHERE " + idColumn + "=" + oid;
+        query = clearCommon(query);
+        query.append(" WHERE ").append(idColumn).append("=").append(oid);
         System.out.println(query);
-        return query;
+        return query.toString();
     }
 
     public static String getSelectQuery(Object object, Object id) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        if (!Annotation.entityAnnotationDeclared(object))
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                e.printStackTrace();
-            }
+        Annotation.entityAnnotationDeclared(object);
         Field[] fields = object.getClass().getDeclaredFields();
         String tableName = table.name();
         String idColumnName = "";
@@ -120,12 +109,7 @@ public class QueryBuilder {
 
     public static String getDeleteQuery(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        if (!Annotation.entityAnnotationDeclared(object))
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                e.printStackTrace();
-            }
+        Annotation.entityAnnotationDeclared(object);
         String query = "DELETE FROM " + table.name() + " WHERE ";
         Field[] fields = object.getClass().getDeclaredFields();
         Object oid = null;
@@ -149,17 +133,37 @@ public class QueryBuilder {
     }
 
     public static String getSelectAllQuery(Object object) {
-        if (!Annotation.entityAnnotationDeclared(object))
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                e.printStackTrace();
-            }
+        Annotation.entityAnnotationDeclared(object);
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Field[] fields = object.getClass().getDeclaredFields();
         String tableName = table.name();
         String query = "SELECT * FROM " + tableName;
         System.out.println(query);
         return query;
     }
+
+    public static String getCreateTableQuery(Object object) {
+        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table.name() + " (");
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            java.lang.annotation.Annotation[] annotations = field.getDeclaredAnnotations();
+            for (java.lang.annotation.Annotation annotation : annotations)
+                if (annotation instanceof Column) {
+                    Column column = field.getAnnotation(Column.class);
+                    query.append(column.name()).append(" ").append(column.dataType()).append("(").append(column.size()).append(")");
+                    Id id = field.getDeclaredAnnotation(Id.class);
+                    if (id != null)
+                        if (id.autoIncrement())
+                            query.append(" NOT NULL PRIMARY KEY AUTO_INCREMENT");
+                        else
+                            query.append(" NOT NULL PRIMARY ");
+                    query.append(",");
+                }
+        }
+        query = clearCommon(query);
+        query.append(");");
+        System.out.println(query);
+        return query.toString();
+    }
+
 }

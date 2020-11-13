@@ -1,11 +1,7 @@
 package orm;
 
 import annotation.Column;
-import annotation.Entity;
-import annotation.Id;
-import annotation.Table;
 import database.DBConnection;
-import exception.EntityException;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -36,7 +32,7 @@ public class Session {
         }
     }
 
-    public void commite() {
+    public void commit() {
         try {
             try {
                 connection.commit();
@@ -70,15 +66,7 @@ public class Session {
     }
 
     public void save(Object object) {
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        String query = getStringQuery(object);
-
+        String query = QueryBuilder.getInsertQuery(object);
         try {
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.execute();
@@ -87,89 +75,21 @@ public class Session {
         }
     }
 
-    private String getStringQuery(Object object) {
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        StringBuilder query = new StringBuilder("INSERT INTO ");
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        query.append(table.name()).append("(");
-        Field[] fields = object.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            field.setAccessible(true);
-            Column column = field.getAnnotation(Column.class);
-            if (column != null)
-                query.append(column.name()).append(",");
-        }
-        if (query.toString().trim().endsWith(","))
-            query = new StringBuilder(query.substring(0, query.length() - 1));
-        query.append(") VALUES (");
-        for (Field field : fields) {
-            try {
-                if (field.getType().getSimpleName().endsWith("String"))
-                    query.append("'").append(field.get(object)).append("' ,");
-                else
-                    query.append(field.get(object)).append(",");
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            }
-        }
-        if (query.toString().trim().endsWith(",")) {
-            query = new StringBuilder(query.substring(0, query.length() - 1));
-        }
-        query.append(")");
-        return query.toString();
-    }
-
     public void update(Object object) {
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        String query = "UPDATE " + table.name() + " SET ";
-        Field[] fields = object.getClass().getDeclaredFields();
-        Object oid = null;
-        String idColumn = "";
-        for (Field field : fields) {
-            Column column = field.getAnnotation(Column.class);
-            field.setAccessible(true);
-            Id id = field.getAnnotation(Id.class);
-            if (id != null) {
-                try {
-                    oid = field.get(object);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                idColumn = column.name();
-            }
-            if (column != null) {
-                try {
-                    if (id == null)
-                        if (field.getType().getSimpleName().endsWith("String"))
-                            query += column.name() + "='" + field.get(object) + "',";
-                        else
-                            query += column.name() + "=" + field.get(object) + ",";
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        if (query.trim().endsWith(",")) {
-            query = query.substring(0, query.length() - 1);
-        }
-        query += " WHERE " + idColumn + "=" + oid;
-        System.out.println(query);
+        String query = QueryBuilder.getUpdateQuery(object);
         try {
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void delete(Object object) {
+        String query = QueryBuilder.getDeleteQuery(object);
+        dbConnection = DBConnection.getDBConnection();
+        try {
+            connection.prepareStatement(query).executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -179,31 +99,13 @@ public class Session {
         Object object = null;
         try {
             object = clazz.newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        Field[] fields = object.getClass().getDeclaredFields();
-        String tableName = table.name();
-        String idColumnName = "";
-        for (Field field : fields) {
-            Id idAnnotation = field.getDeclaredAnnotation(Id.class);
-            if (idAnnotation != null) {
-                Column column = field.getDeclaredAnnotation(Column.class);
-                idColumnName = column.name();
-            }
-        }
-        String query = "SELECT * FROM " + tableName + " WHERE " + idColumnName + " = " + id;
+        String query = QueryBuilder.getSelectQuery(object, id);
 
+        //TODO fields isn't single responsible
+        Field[] fields = object.getClass().getDeclaredFields();
         ResultSet resultSet = null;
         try {
             resultSet = connection.prepareStatement(query).executeQuery();
@@ -211,6 +113,7 @@ public class Session {
                 for (Field field : fields) {
                     field.setAccessible(true);
                     Column column = field.getDeclaredAnnotation(Column.class);
+                    //TODO refactoring filed.getType.endsWith ...
                     if (column != null) {
                         if (field.getType().getSimpleName().endsWith("int"))
                             field.set(object, resultSet.getInt(column.name()));
@@ -220,72 +123,23 @@ public class Session {
                             field.set(object, resultSet.getInt(column.name()));
                     }
                 }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (SQLException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        System.out.println(query);
         return object;
     }
 
-    public void delete(Object object) {
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        String query = "DELETE FROM " + table.name() + " WHERE ";
-        Field[] fields = object.getClass().getDeclaredFields();
-        Object oid = null;
-        String idColumn = "";
-        for (Field field : fields) {
-            field.setAccessible(true);
-            Id id = field.getAnnotation(Id.class);
-            if (id != null) {
-                Column column = field.getAnnotation(Column.class);
-                try {
-                    oid = field.get(object);
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                idColumn = column.name();
-            }
-        }
-        query += idColumn + " = " + oid;
-        System.out.println(query);
-        dbConnection = DBConnection.getDBConnection();
-        try {
-            connection.prepareStatement(query).executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public List<Object> findAll(Class clazz) {
+        List<Object> objectList = new ArrayList<>();
         Object object = null;
         try {
             object = clazz.newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity == null)
-            try {
-                throw new EntityException(object);
-            } catch (EntityException e) {
-                System.out.println(e.getMessage());
-            }
-        List<Object> objectList = new ArrayList<>();
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+        String query = QueryBuilder.getSelectAllQuery(object);
+        //TODO fields refactor
         Field[] fields = object.getClass().getDeclaredFields();
-        String tableName = table.name();
-        String query = "SELECT * FROM " + tableName;
 
         ResultSet resultSet = null;
         try {
@@ -296,6 +150,7 @@ public class Session {
                     field.setAccessible(true);
                     Column column = field.getDeclaredAnnotation(Column.class);
                     if (column != null) {
+                        //TODO refactoring filed.getType.endsWith ...
                         if (field.getType().getSimpleName().endsWith("int"))
                             field.set(object, resultSet.getInt(column.name()));
                         else if (field.getType().getSimpleName().endsWith("String"))
@@ -306,14 +161,9 @@ public class Session {
                 }
                 objectList.add(object);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InstantiationException e) {
+        } catch (SQLException | InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        System.out.println(query);
         return objectList;
     }
 
