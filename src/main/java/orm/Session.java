@@ -17,34 +17,79 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Session {
-    DBConnection dbConnection = null;
-    Connection connection;
+    private DBConnection dbConnection = null;
+    private Connection connection;
+    private PreparedStatement preparedStatement;
+
+    private short isolationLevel = -1;
+
+    public void beginTransaction() {
+        dbConnection = DBConnection.getDBConnection();
+        try {
+            connection = dbConnection.getConnection();
+            connection.setAutoCommit(false);
+            if (isolationLevel == -1) {
+                connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            }
+        } catch (IOException | SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void commite() {
+        try {
+            try {
+                connection.commit();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
+    }
+
+    public void close() {
+        if (preparedStatement != null) {
+            try {
+                preparedStatement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        if (connection == null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public void save(Object object) {
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
                 System.out.println(e.getMessage());
             }
         String query = getStringQuery(object);
-        System.out.println(query);
-        dbConnection = DBConnection.getDBConnection();
+
         try {
-            connection = dbConnection.getConnection();
-            PreparedStatement statement = connection.prepareStatement(query.toString());
-            statement.execute();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private String getStringQuery(Object object) {
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
@@ -82,8 +127,8 @@ public class Session {
 
     public void update(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
@@ -122,18 +167,16 @@ public class Session {
         }
         query += " WHERE " + idColumn + "=" + oid;
         System.out.println(query);
-        dbConnection = DBConnection.getDBConnection();
         try {
-            dbConnection.getConnection().prepareStatement(query).executeUpdate();
+            preparedStatement = connection.prepareStatement(query);
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public Object get(Class clazz, Object id) {
-        Object object= null;
+        Object object = null;
         try {
             object = clazz.newInstance();
         } catch (InstantiationException e) {
@@ -142,8 +185,8 @@ public class Session {
             e.printStackTrace();
         }
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
@@ -163,7 +206,7 @@ public class Session {
 
         ResultSet resultSet = null;
         try {
-            resultSet = dbConnection.getDBConnection().getConnection().prepareStatement(query).executeQuery();
+            resultSet = connection.prepareStatement(query).executeQuery();
             while (resultSet.next())
                 for (Field field : fields) {
                     field.setAccessible(true);
@@ -179,10 +222,8 @@ public class Session {
                 }
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (IllegalAccessException e) {
-
+            e.printStackTrace();
         }
         System.out.println(query);
         return object;
@@ -190,8 +231,8 @@ public class Session {
 
     public void delete(Object object) {
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
@@ -218,17 +259,23 @@ public class Session {
         System.out.println(query);
         dbConnection = DBConnection.getDBConnection();
         try {
-            dbConnection.getConnection().prepareStatement(query).executeUpdate();
+            connection.prepareStatement(query).executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public List<Object> findAll(Object object) {
-        Entity entity=object.getClass().getDeclaredAnnotation(Entity.class);
-        if (entity==null)
+    public List<Object> findAll(Class clazz) {
+        Object object = null;
+        try {
+            object = clazz.newInstance();
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        Entity entity = object.getClass().getDeclaredAnnotation(Entity.class);
+        if (entity == null)
             try {
                 throw new EntityException(object);
             } catch (EntityException e) {
@@ -242,9 +289,9 @@ public class Session {
 
         ResultSet resultSet = null;
         try {
-            resultSet = dbConnection.getDBConnection().getConnection().prepareStatement(query).executeQuery();
-            while (resultSet.next()){
-                object=object.getClass().newInstance();
+            resultSet = connection.prepareStatement(query).executeQuery();
+            while (resultSet.next()) {
+                object = object.getClass().newInstance();
                 for (Field field : fields) {
                     field.setAccessible(true);
                     Column column = field.getDeclaredAnnotation(Column.class);
@@ -261,14 +308,20 @@ public class Session {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         } catch (IllegalAccessException e) {
-
+            e.printStackTrace();
         } catch (InstantiationException e) {
             e.printStackTrace();
         }
         System.out.println(query);
         return objectList;
+    }
+
+    public short getIsolationLevel() {
+        return isolationLevel;
+    }
+
+    public void setIsolationLevel(short isolationLevel) {
+        this.isolationLevel = isolationLevel;
     }
 }
