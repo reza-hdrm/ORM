@@ -1,15 +1,26 @@
 package orm;
 
 import entity.User;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 public class SessionTest {
-    Session session;
+    private static Session session;
+
+    @Before
+    public static void beforeClass() {
+        session = new Session();
+    }
+
+    @After
+    public static void afterClass() {
+
+    }
 
     @Test
     public void save() {
-        session = new Session();
         session.beginTransaction();
         User user = new User();
         user.setFirstName("Reza");
@@ -25,9 +36,8 @@ public class SessionTest {
 
     @Test
     public void update() {
-        session=new Session();
         session.beginTransaction();
-        User userDB=(User) session.get(User.class,7);
+        User userDB = (User) session.get(User.class, 7);
 
     }
 

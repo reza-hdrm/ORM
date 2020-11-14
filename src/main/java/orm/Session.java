@@ -27,10 +27,11 @@ public class Session {
             if (isolationLevel == -1) {
                 connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
             }
-        } catch (IOException | SQLException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     public void commit() {
         try {
@@ -138,7 +139,7 @@ public class Session {
             e.printStackTrace();
         }
         String query = QueryBuilder.getSelectAllQuery(object);
-        //TODO fields refactor
+        //TODO fields refactor - this code isn't single responsible
         Field[] fields = object.getClass().getDeclaredFields();
 
         ResultSet resultSet = null;

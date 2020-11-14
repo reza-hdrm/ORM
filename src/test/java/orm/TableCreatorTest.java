@@ -17,12 +17,12 @@ public class TableCreatorTest {
     public void create() {
         TableCreator tableCreator = new TableCreator();
         tableCreator.create(new User());
-        String tableName="";
-        boolean isTableExits=false;
+        String tableName = "";
+        boolean isTableExits = false;
         try {
-            Object o=User.class.newInstance();
-            Table table=o.getClass().getAnnotation(Table.class);
-            tableName=table.name();
+            Object o = User.class.newInstance();
+            Table table = o.getClass().getAnnotation(Table.class);
+            tableName = table.name();
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -30,14 +30,12 @@ public class TableCreatorTest {
         }
         try {
             ResultSet resultSet = DBConnection.getDBConnection().getConnection().prepareStatement("SHOW TABLES").executeQuery();
-            while (resultSet.next()){
+            while (resultSet.next()) {
                 if (resultSet.getString(1).equals(tableName))
-                    isTableExits=true;
+                    isTableExits = true;
             }
-            Assert.assertEquals("Table is exits :",isTableExits,true);
+            Assert.assertEquals("Table is exits :", isTableExits, true);
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
             e.printStackTrace();
         }
     }

@@ -1,12 +1,10 @@
 package database;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import orm.Config;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 
 public class DBConnection {
 
@@ -20,22 +18,18 @@ public class DBConnection {
     private static volatile DBConnection databaseConnection = null;
 
     private DBConnection() {
-
+        Config.getConfig();
+        openConnection();
     }
 
-    private void setDBProperties() throws IOException {
-        String pathname="src/main/resources/application.properties";
-        File file = new File(pathname);
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(file));
-
-        this.dbDriver = properties.getProperty("com.settings.db_driver");
-        this.dbUrl = properties.getProperty("com.settings.db_url");
-        this.dbUser = properties.getProperty("com.settings.db_user");
-        this.dbPassword = properties.getProperty("com.settings.db_password");
+    private void setDBProperties() {
+        this.dbDriver = Config.getDBDriver();
+        this.dbUrl = Config.getDBUrl();
+        this.dbUser = Config.getDBUser();
+        this.dbPassword = Config.getDBPassword();
     }
 
-    public Connection getConnection() throws IOException {
+    public Connection openConnection() {
         setDBProperties();
         try {
             connection = DriverManager.getConnection(this.dbUrl, this.dbUser, this.dbPassword);
@@ -52,6 +46,10 @@ public class DBConnection {
                     databaseConnection = new DBConnection();
             }
         return databaseConnection;
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 
 }
