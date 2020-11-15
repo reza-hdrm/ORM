@@ -39,6 +39,9 @@ public class Config {
         return properties.getProperty("com.settings.db_password");
     }
 
+    public static boolean getDBShowSql(){
+        return Boolean.parseBoolean(properties.getProperty("com.settings.db_show_sql"));
+    }
     public static Config getConfig() {
         if (config == null)
             synchronized (Config.class) {
@@ -47,4 +50,5 @@ public class Config {
             }
         return config;
     }
+
 }

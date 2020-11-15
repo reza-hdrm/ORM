@@ -10,7 +10,8 @@ import java.lang.reflect.Field;
 
 
 public class QueryBuilder {
-    //TODO Show query in application.property
+    private static boolean isShowSql = Config.getDBShowSql();
+
     public static String getInsertQuery(Object object) {
         Annotation.entityAnnotationDeclared(object);
 
@@ -41,7 +42,7 @@ public class QueryBuilder {
         query = clearCommon(query);
         query.append(")");
 
-        System.out.println(query);
+        showSqlStatement(query);
 
         return query.toString();
     }
@@ -85,7 +86,7 @@ public class QueryBuilder {
         }
         query = clearCommon(query);
         query.append(" WHERE ").append(idColumn).append("=").append(oid);
-        System.out.println(query);
+        showSqlStatement(query);
         return query.toString();
     }
 
@@ -102,9 +103,10 @@ public class QueryBuilder {
                 idColumnName = column.name();
             }
         }
-        String query = "SELECT * FROM " + tableName + " WHERE " + idColumnName + " = " + id;
-        System.out.println(query);
-        return query;
+        StringBuilder query = new StringBuilder("SELECT * FROM ");
+        query.append(tableName).append(" WHERE ").append(idColumnName).append(" = ").append(id);
+        showSqlStatement(query);
+        return query.toString();
     }
 
     public static String getDeleteQuery(Object object) {
@@ -162,8 +164,13 @@ public class QueryBuilder {
         }
         query = clearCommon(query);
         query.append(");");
-        System.out.println(query);
+        showSqlStatement(query);
         return query.toString();
+    }
+
+    private static void showSqlStatement(StringBuilder query) {
+        if (isShowSql)
+            System.out.println(query);
     }
 
 }

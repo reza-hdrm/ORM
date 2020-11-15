@@ -7,15 +7,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SessionTest {
-    private static Session session;
+    private Session session;
 
     @Before
-    public static void beforeClass() {
+    public  void beforeClass() {
         session = new Session();
     }
 
     @After
-    public static void afterClass() {
+    public void afterClass() {
 
     }
 
