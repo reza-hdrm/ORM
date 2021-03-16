@@ -1,11 +1,8 @@
 package orm;
 
-import annotation.Column;
-import annotation.Id;
-import annotation.Table;
-import exception.EntityException;
 import util.Annotation;
 
+import javax.persistence.*;
 import java.lang.reflect.Field;
 
 
@@ -152,13 +149,13 @@ public class QueryBuilder {
             for (java.lang.annotation.Annotation annotation : annotations)
                 if (annotation instanceof Column) {
                     Column column = field.getAnnotation(Column.class);
-                    query.append(column.name()).append(" ").append(column.dataType()).append("(").append(column.size()).append(")");
-                    Id id = field.getDeclaredAnnotation(Id.class);
+                    query.append(column.name()).append(" ").append(field.getType().getSimpleName().equals("String")?"VARCHAR":field.getType().getSimpleName()).append("(").append(column.length()).append(")");
+                    GeneratedValue id = field.getDeclaredAnnotation(GeneratedValue.class);
                     if (id != null)
-                        if (id.autoIncrement())
+                        if (id.strategy().equals(GenerationType.AUTO))
                             query.append(" NOT NULL PRIMARY KEY AUTO_INCREMENT");
                         else
-                            query.append(" NOT NULL PRIMARY ");
+                            query.append(" NOT NULL PRIMARY KEY");
                     query.append(",");
                 }
         }

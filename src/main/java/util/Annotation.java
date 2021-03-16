@@ -1,7 +1,9 @@
 package util;
 
-import annotation.Entity;
 import exception.EntityException;
+
+import javax.persistence.Entity;
+
 
 public class Annotation {
     //TODO change to BeanValidation with annotation

@@ -1,7 +1,6 @@
-package DAO;
+package orm.DAO;
 
-import entity.Product;
-import entity.Product;
+import orm.entity.Product;
 import orm.Session;
 
 import java.util.ArrayList;

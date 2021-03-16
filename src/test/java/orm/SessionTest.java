@@ -1,22 +1,17 @@
 package orm;
 
-import entity.User;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import orm.entity.User;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 
 public class SessionTest {
     private Session session;
 
-    @Before
-    public  void beforeClass() {
+    @BeforeEach
+    public void beforeClass() {
         session = new Session();
-    }
-
-    @After
-    public void afterClass() {
-
     }
 
     @Test
@@ -28,25 +23,25 @@ public class SessionTest {
         user.setEmail("rezacolonelup@gmail.com");
         user.setMobile(933991484);
         session.save(user);
-        User userDB = (User) session.get(User.class, 8);
+        User userDB = (User) session.find(User.class, 8);
         session.commit();
         session.close();
-        Assert.assertEquals(" ", userDB.getFirstName(), "Reza");
+        Assertions.assertEquals(" ", userDB.getFirstName(), "Reza");
     }
 
     @Test
     public void update() {
         session.beginTransaction();
-        User userDB = (User) session.get(User.class, 7);
+        User userDB = (User) session.find(User.class, 7);
 
     }
 
     @Test
-    public void get() {
+    public void find() {
         session = new Session();
         session.beginTransaction();
-        User userDB = (User) session.get(User.class, 7);
-        Assert.assertEquals(" ", userDB.getFirstName(), "Reza");
+        User userDB = (User) session.find(User.class, 7);
+        Assertions.assertEquals(" ", userDB.getFirstName(), "Reza");
         session.commit();
         session.close();
     }
@@ -57,18 +52,15 @@ public class SessionTest {
         session = new Session();
         session.beginTransaction();
         int id = 6;
-        User userDB = (User) session.get(User.class, id);
-        Assert.assertEquals("this user isn't found :", userDB.getFirstName(), "Reza");
+        User userDB = (User) session.find(User.class, id);
+        Assertions.assertEquals("this user isn't found :", userDB.getFirstName(), "Reza");
         session.commit();
         session.delete(userDB);
         session.commit();
-        userDB = (User) session.get(User.class, id);
-        Assert.assertNotEquals("this user is deleted :", userDB.getFirstName(), "Reza");
+        userDB = (User) session.find(User.class, id);
+        Assertions.assertNotEquals("this user is deleted :", userDB.getFirstName(), "Reza");
         session.commit();
         session.close();
     }
 
-    @Test
-    public void findAll() {
-    }
 }

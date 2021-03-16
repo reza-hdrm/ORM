@@ -1,29 +1,30 @@
-package entity;
+package orm.entity;
 
-import annotation.Column;
-import annotation.Entity;
-import annotation.Id;
-import annotation.Table;
 import emum.DataType;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "user_tbl")
 public class User {
 
     @Id
-    @Column(name = "user_id", dataType = DataType.INT, size = 11)
+    @Column(name = "user_id", length = 11)
     private int id;
 
-    @Column(name = "first_name", dataType = DataType.VARCHAR)
+    @Column(name = "first_name")
     private String firstName;
 
-    @Column(name = "last_name", dataType = DataType.VARCHAR)
+    @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "email", dataType = DataType.VARCHAR)
+    @Column(name = "email")
     private String email;
 
-    @Column(name = "mobile", dataType = DataType.INT)
+    @Column(name = "mobile")
     private int mobile;
 
     public int getId() {

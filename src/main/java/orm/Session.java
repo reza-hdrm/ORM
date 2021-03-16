@@ -1,8 +1,8 @@
 package orm;
 
-import annotation.Column;
 import database.DBConnection;
 
+import javax.persistence.Column;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
@@ -96,7 +96,7 @@ public class Session {
         }
     }
 
-    public Object get(Class clazz, Object id) {
+    public Object find(Class clazz, Object id) {
         Object object = null;
         try {
             object = clazz.newInstance();

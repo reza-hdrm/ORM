@@ -1,25 +1,22 @@
-package entity;
+package orm.entity;
 
-import annotation.Column;
-import annotation.Entity;
-import annotation.Id;
-import annotation.Table;
-import emum.DataType;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "product_tbl")
 public class Product {
     @Id
-    @Column(name = "product_id", dataType = DataType.INT, size = 11)
+    @GeneratedValue
+    @Column(name = "product_id", length = 11)
     private int id;
 
-    @Column(name = "name", dataType = DataType.VARCHAR)
+    @Column(name = "name")
     private String name;
 
-    @Column(name = "price", dataType = DataType.INT, size = 11)
+    @Column(name = "price", length = 11)
     private int price;
 
-    @Column(name = "unitInStock", dataType = DataType.INT, size = 11)
+    @Column(name = "unitInStock", length = 11)
     private int unitInStock;
 
     public int getId() {
