@@ -8,16 +8,13 @@ import java.util.Properties;
 import java.util.logging.Logger;
 
 public class Config {
-    private final String pathname = "src/main/resources/application.properties";
-    private final File file = new File(pathname);
     private static final Properties properties = new Properties();
     private static volatile Config config = null;
-    private final Logger LOGGER=null;
 
     private Config() {
-        try {
-            properties.load(new FileInputStream(file));
-            //properties.load(new FileReader(pathname));
+        try (final FileInputStream fileInputStream = new FileInputStream(
+                new File("src/main/resources/application.properties"))) {
+            properties.load(fileInputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -39,16 +36,16 @@ public class Config {
         return properties.getProperty("com.settings.db_password");
     }
 
-    public static boolean getDBShowSql(){
+    public static boolean getDBShowSql() {
         return Boolean.parseBoolean(properties.getProperty("com.settings.db_show_sql"));
     }
-    public static Config getConfig() {
+
+    public static void getConfig() {
         if (config == null)
             synchronized (Config.class) {
                 if (config == null)
                     config = new Config();
             }
-        return config;
     }
 
 }

@@ -7,10 +7,14 @@ import java.lang.reflect.Field;
 
 
 public class QueryBuilder {
-    private static boolean isShowSql = Config.getDBShowSql();
+    private static final boolean IS_SHOW_SQL = Config.getDBShowSql();
+
+    private QueryBuilder() {
+
+    }
 
     public static String getInsertQuery(Object object) {
-        Annotation.entityAnnotationDeclared(object);
+        Annotation.entityAnnotationDeclared(object.getClass());
 
         StringBuilder query = new StringBuilder("INSERT INTO ");
         Table table = object.getClass().getDeclaredAnnotation(Table.class);
@@ -50,11 +54,11 @@ public class QueryBuilder {
         return query;
     }
 
-    public static String getUpdateQuery(Object object) {
-        Annotation.entityAnnotationDeclared(object);
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+    public static String getUpdateQuery(Class<?> clazz) {
+        Annotation.entityAnnotationDeclared(clazz);
+        Table table = clazz.getDeclaredAnnotation(Table.class);
         StringBuilder query = new StringBuilder("UPDATE " + table.name() + " SET ");
-        Field[] fields = object.getClass().getDeclaredFields();
+        Field[] fields = clazz.getDeclaredFields();
         Object oid = null;
         String idColumn = "";
         for (Field field : fields) {
@@ -63,7 +67,7 @@ public class QueryBuilder {
             Id id = field.getAnnotation(Id.class);
             if (id != null) {
                 try {
-                    oid = field.get(object);
+                    oid = field.get(clazz);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -73,9 +77,9 @@ public class QueryBuilder {
                 try {
                     if (id == null)
                         if (field.getType().getSimpleName().endsWith("String"))
-                            query.append(column.name()).append("='").append(field.get(object)).append("',");
+                            query.append(column.name()).append("='").append(field.get(clazz)).append("',");
                         else
-                            query.append(column.name()).append("=").append(field.get(object)).append(",");
+                            query.append(column.name()).append("=").append(field.get(clazz)).append(",");
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -87,10 +91,10 @@ public class QueryBuilder {
         return query.toString();
     }
 
-    public static String getSelectQuery(Object object, Object id) {
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Annotation.entityAnnotationDeclared(object);
-        Field[] fields = object.getClass().getDeclaredFields();
+    public static String getSelectQuery(Class<?> clazz, Object id) {
+        Table table = clazz.getClass().getDeclaredAnnotation(Table.class);
+        Annotation.entityAnnotationDeclared(clazz);
+        Field[] fields = clazz.getClass().getDeclaredFields();
         String tableName = table.name();
         String idColumnName = "";
         for (Field field : fields) {
@@ -106,11 +110,11 @@ public class QueryBuilder {
         return query.toString();
     }
 
-    public static String getDeleteQuery(Object object) {
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
-        Annotation.entityAnnotationDeclared(object);
+    public static String getDeleteQuery(Class<?> clazz) {
+        Table table = clazz.getDeclaredAnnotation(Table.class);
+        Annotation.entityAnnotationDeclared(clazz);
         String query = "DELETE FROM " + table.name() + " WHERE ";
-        Field[] fields = object.getClass().getDeclaredFields();
+        Field[] fields = clazz.getDeclaredFields();
         Object oid = null;
         String idColumn = "";
         for (Field field : fields) {
@@ -119,7 +123,7 @@ public class QueryBuilder {
             if (id != null) {
                 Column column = field.getAnnotation(Column.class);
                 try {
-                    oid = field.get(object);
+                    oid = field.get(clazz);
                 } catch (IllegalAccessException e) {
                     e.printStackTrace();
                 }
@@ -131,25 +135,27 @@ public class QueryBuilder {
         return query;
     }
 
-    public static String getSelectAllQuery(Object object) {
-        Annotation.entityAnnotationDeclared(object);
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+    public static String getSelectAllQuery(Class<?> clazz) {
+        Annotation.entityAnnotationDeclared(clazz);
+        Table table = clazz.getDeclaredAnnotation(Table.class);
         String tableName = table.name();
         String query = "SELECT * FROM " + tableName;
         System.out.println(query);
         return query;
     }
 
-    public static String getCreateTableQuery(Object object) {
-        Table table = object.getClass().getDeclaredAnnotation(Table.class);
+    public static String getCreateTableQuery(Class<?> clazz) {
+        Table table = clazz.getDeclaredAnnotation(Table.class);
         StringBuilder query = new StringBuilder("CREATE TABLE IF NOT EXISTS " + table.name() + " (");
-        Field[] fields = object.getClass().getDeclaredFields();
+        Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             java.lang.annotation.Annotation[] annotations = field.getDeclaredAnnotations();
             for (java.lang.annotation.Annotation annotation : annotations)
                 if (annotation instanceof Column) {
                     Column column = field.getAnnotation(Column.class);
-                    query.append(column.name()).append(" ").append(field.getType().getSimpleName().equals("String")?"VARCHAR":field.getType().getSimpleName()).append("(").append(column.length()).append(")");
+                    query.append(column.name()).append(" ").append(
+                            field.getType().getSimpleName().equals("String") ? "VARCHAR" : field.getType().getSimpleName()
+                    ).append("(").append(column.length()).append(")");
                     GeneratedValue id = field.getDeclaredAnnotation(GeneratedValue.class);
                     if (id != null)
                         if (id.strategy().equals(GenerationType.AUTO))
@@ -166,7 +172,7 @@ public class QueryBuilder {
     }
 
     private static void showSqlStatement(StringBuilder query) {
-        if (isShowSql)
+        if (IS_SHOW_SQL)
             System.out.println(query);
     }
 

@@ -3,7 +3,6 @@ package orm;
 import database.DBConnection;
 
 import javax.persistence.Column;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -11,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Session {
     private DBConnection dbConnection = null;
@@ -49,6 +49,7 @@ public class Session {
         }
     }
 
+/*
     public void close() {
         if (preparedStatement != null) {
             try {
@@ -65,37 +66,38 @@ public class Session {
             }
         }
     }
+*/
 
-    public void save(Object object) {
+    /*public void save(Object object) {
         String query = QueryBuilder.getInsertQuery(object);
         try {
-            preparedStatement = connection.prepareStatement(query);
-            preparedStatement.execute();
+            connection.prepareStatement(query).execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    public void update(Object object) {
-        String query = QueryBuilder.getUpdateQuery(object);
+    /*public void update(Object object) {
+        String query = QueryBuilder.getUpdateQuery(object.getClass());
         try {
             preparedStatement = connection.prepareStatement(query);
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
-    public void delete(Object object) {
-        String query = QueryBuilder.getDeleteQuery(object);
+    /*public void delete(Object object) {
+        String query = QueryBuilder.getDeleteQuery((Class<?>) object);
         dbConnection = DBConnection.getDBConnection();
         try {
             connection.prepareStatement(query).executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
+/*
     public Object find(Class clazz, Object id) {
         Object object = null;
         try {
@@ -129,8 +131,10 @@ public class Session {
         }
         return object;
     }
+*/
 
-    public List<Object> findAll(Class clazz) {
+/*
+    public List<Object> findAll(Class<?> clazz) {
         List<Object> objectList = new ArrayList<>();
         Object object = null;
         try {
@@ -138,7 +142,7 @@ public class Session {
         } catch (InstantiationException | IllegalAccessException e) {
             e.printStackTrace();
         }
-        String query = QueryBuilder.getSelectAllQuery(object);
+        String query = QueryBuilder.getSelectAllQuery(clazz);
         //TODO fields refactor - this code isn't single responsible
         Field[] fields = object.getClass().getDeclaredFields();
 
@@ -167,6 +171,7 @@ public class Session {
         }
         return objectList;
     }
+*/
 
     public short getIsolationLevel() {
         return isolationLevel;

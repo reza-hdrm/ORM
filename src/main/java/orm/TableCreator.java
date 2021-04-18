@@ -2,14 +2,13 @@ package orm;
 
 import database.DBConnection;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class TableCreator {
-    public void create(Object object) {
-        String query = QueryBuilder.getCreateTableQuery(object);
+    public void create(Class<?> clazz) {
+        String query = QueryBuilder.getCreateTableQuery(clazz);
 
         DBConnection dbConnection = DBConnection.getDBConnection();
         Connection connection = null;
